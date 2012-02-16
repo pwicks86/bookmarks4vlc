@@ -7,10 +7,10 @@ Bookmarks for vlc that actually work!
 
 --global variables
 dialog = nil                                --dialog box
-blist = nil -- the list of bookmarks
+bmarks_widget = nil -- the list of bookmarks
 add_button = nil -- Add Bookmark button
+bookmark_table = {}
 
-debug_label = nil
 
 -- Script descriptor, called when the extensions are scanned
 function descriptor()
@@ -34,9 +34,8 @@ end
 -- Create the main dialog with a simple search bar
 function create_dlg()
     dialog = vlc.dialog("Bookmarks")
-    debug_label = dialog:add_label("debug label",1,3,1,1)
     dialog:add_label("Current Bookmarks", 1, 1, 1, 1)
-    blist = dialog:add_list(2,1,1,2)
+    bmarks_widget = dialog:add_list(2,1,1,2)
     add_button = dialog:add_button("Add Bookmark",add_bookmark,1,2,1,1)
     --local item = vlc.input.item()
     --text = dialog:add_text_input(item and item:name() or "", 2, 1, 1, 1)
@@ -44,14 +43,33 @@ function create_dlg()
     dialog:show()
 end
 
-function dbgmsg(x)
+function update_marks()
+    bmarks_widget:clear()
+    for i,v in pairs(bookmark_table) do
+        --debug_msg(v.time)
+        bmarks_widget:add_value(v.time .. " " .. v.name .. i, i)
+        global_index = global_index + 1
+    end
+end
+
+function go_to_time(seconds)
+    local input = vlc.object.input()
+    vlc.var.set(input, "time", seconds)
+end
+
+function debug_msg(x)
     vlc.osd.message(x,channel1)
-    debug_label:set_text(x)
 end
 
 function add_bookmark()
-    --dbgmsg(get_filename())
-    dbgmsg(get_position())
+    --go_to_time(get_position() + 10)
+    local cur_time = get_position()
+    local video_name = get_name()
+    local video_uri = get_uri()
+    local mark = { time=cur_time, name=video_name, uri=video_uri}
+    table.insert(bookmark_table, mark)
+    update_marks()
+    --debug_msg(cur_time)
 end
 
 function get_uri()
@@ -65,10 +83,10 @@ function get_name()
 end
 
 function get_position()
-    local item = vlc.object.input
+    -- Thanks to Rob Williams for this
+    local input = vlc.object.input()
     local curtime = vlc.var.get(input, "time")
     return curtime
-
 end
 
 -- Get clean title from filename
