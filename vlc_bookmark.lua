@@ -7,6 +7,8 @@ dialog = nil --dialog box
 bmarks_widget = nil --the list of bookmarks
 add_button = nil --Add Bookmark button
 go_button = nil --Go to Bookmark button
+del_button = nil --Delete Bookmark button
+clear_button = nil --Clear Bookmarks button
 bookmark_table = {} --table to hold actual bookmarks
 
 
@@ -15,7 +17,7 @@ function descriptor()
     return { title = "VLC Bookmarks" ;
              version = "1.0" ;
              author = "Paul Wicks" ;
-             url = 'http://google.com';
+             url = 'http://pwicks.com/code/bookmarks4vlc';
              shortdesc = "Bookmarks!";
              description = "<center><b>Bookmarks for VLC</b></center><br />"
                         .. "Save your place in a movie!" ;
@@ -33,40 +35,24 @@ end
 
 -- col, row, col_span, row_span, width, heighte
 
--- Create the main dialog with a simple search bar
+-- Create the main dialog
 function create_dlg()
     dialog = vlc.dialog("Bookmarks")
 
     dialog:add_label("Current Bookmarks", 2, 1, 1, 1)
 
-    bmarks_widget = dialog:add_list(2,1,1,2)
+    bmarks_widget = dialog:add_list(2,1,1,5)
 
     add_button = dialog:add_button("Add Bookmark",add_bookmark,1,2,1,1)
     go_button = dialog:add_button("Go To Selected Bookmark", go_to_mark,1,3,1,1)
+    del_button = dialog:add_button("Delete Selected Bookmark(s)", del_bookmarks,1,4,1,1)
+    clear_button = dialog:add_button("Clear Bookmarks", clear_bookmarks,1,5,1,1)
     dialog:show()
-end
-
--- Update the mark list with the current marks
-function update_marks()
-    bmarks_widget:clear()
-    for i,v in pairs(bookmark_table) do
-        bmarks_widget:add_value(v.time .. " - " .. v.name, i)
-    end
-end
-
--- given a time in seconds, go to that time in the currently playing file
-function go_to_time(seconds)
-    local input = vlc.object.input()
-    vlc.var.set(input, "time", seconds)
-end
-
--- print a message to the screen
-function debug_msg(x)
-    vlc.osd.message(x,channel1)
 end
 
 -- Called when the Add Bookmark button is pressed
 function add_bookmark()
+    --TODO: add error check here
     --go_to_time(get_position() + 10)
     local cur_time = get_position()
     local video_name = get_name()
@@ -80,16 +66,7 @@ function add_bookmark()
     --debug_msg(pl)
 end
 
-function table_is_empty(t) 
-    return table.maxn(t) == 0
-end
-
-function get_first_index(t)
-    for i,v in pairs(t) do
-        return i
-    end
-end
-
+-- Called when the Go to Selected Bookmark button is pressed
 function go_to_mark()
     debug_msg("clicked go to mark")
     -- Handle the case when there are no bookmarks
@@ -115,20 +92,62 @@ function go_to_mark()
     end
 end
 
-function input_changed()
-    -- check if going to a bookmark has been deferred.
+function del_bookmarks()
 end
 
+function clear_bookmarks()
+end
+
+-- Update the mark list with the current marks
+function update_marks()
+    bmarks_widget:clear()
+    for i,v in pairs(bookmark_table) do
+        bmarks_widget:add_value(v.time .. " - " .. v.name, i)
+    end
+end
+
+-- given a time in seconds, go to that time in the currently playing file
+function go_to_time(seconds)
+    local input = vlc.object.input()
+    vlc.var.set(input, "time", seconds)
+end
+
+-- print a message to the screen
+function debug_msg(x)
+    vlc.osd.message(x,channel1)
+end
+
+
+-- Return true if t is empty
+function table_is_empty(t) 
+    return table.maxn(t) == 0
+end
+
+-- Get the index of the first thing in a table (according to pairs)
+function get_first_index(t)
+    for i,v in pairs(t) do
+        return i
+    end
+end
+
+
+--function input_changed()
+    -- check if going to a bookmark has been deferred.
+--end
+
+-- Get the uri of the currently playing item
 function get_uri()
     local item = vlc.input.item()
     return item:uri()
 end
 
+-- Get the name of the currently playing item
 function get_name()
     local item = vlc.input.item()
     return item:name()
 end
 
+-- Get the current time for the currently playing item
 function get_position()
     -- Thanks to Rob Williams for this
     local input = vlc.object.input()
