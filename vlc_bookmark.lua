@@ -2,14 +2,12 @@
 Bookmarks for vlc that actually work! 
  ]]
 
--- load the table serialization stuff
---dofile( "table.save-1.0.lua" )
-
 --global variables
-dialog = nil                                --dialog box
-bmarks_widget = nil -- the list of bookmarks
-add_button = nil -- Add Bookmark button
-bookmark_table = {}
+dialog = nil --dialog box
+bmarks_widget = nil --the list of bookmarks
+add_button = nil --Add Bookmark button
+go_button = nil --Go to Bookmark button
+bookmark_table = {} --table to hold actual bookmarks
 
 
 -- Script descriptor, called when the extensions are scanned
@@ -29,38 +27,45 @@ function activate()
     create_dlg()
 end
 
+function deactivate()
+    debug_msg("deactivated!")
+end
+
 -- col, row, col_span, row_span, width, heighte
 
 -- Create the main dialog with a simple search bar
 function create_dlg()
     dialog = vlc.dialog("Bookmarks")
-    dialog:add_label("Current Bookmarks", 1, 1, 1, 1)
+
+    dialog:add_label("Current Bookmarks", 2, 1, 1, 1)
+
     bmarks_widget = dialog:add_list(2,1,1,2)
+
     add_button = dialog:add_button("Add Bookmark",add_bookmark,1,2,1,1)
-    --local item = vlc.input.item()
-    --text = dialog:add_text_input(item and item:name() or "", 2, 1, 1, 1)
-    --dialog:add_button("Search", search, 3, 1, 1, 1)
+    go_button = dialog:add_button("Go To Selected Bookmark", go_to_mark,1,3,1,1)
     dialog:show()
 end
 
+-- Update the mark list with the current marks
 function update_marks()
     bmarks_widget:clear()
     for i,v in pairs(bookmark_table) do
-        --debug_msg(v.time)
-        bmarks_widget:add_value(v.time .. " " .. v.name .. i, i)
-        global_index = global_index + 1
+        bmarks_widget:add_value(v.time .. " - " .. v.name, i)
     end
 end
 
+-- given a time in seconds, go to that time in the currently playing file
 function go_to_time(seconds)
     local input = vlc.object.input()
     vlc.var.set(input, "time", seconds)
 end
 
+-- print a message to the screen
 function debug_msg(x)
     vlc.osd.message(x,channel1)
 end
 
+-- Called when the Add Bookmark button is pressed
 function add_bookmark()
     --go_to_time(get_position() + 10)
     local cur_time = get_position()
@@ -70,6 +75,48 @@ function add_bookmark()
     table.insert(bookmark_table, mark)
     update_marks()
     --debug_msg(cur_time)
+    -- temp
+    --local pl = vlc.playlist.get("playlist",false)
+    --debug_msg(pl)
+end
+
+function table_is_empty(t) 
+    return table.maxn(t) == 0
+end
+
+function get_first_index(t)
+    for i,v in pairs(t) do
+        return i
+    end
+end
+
+function go_to_mark()
+    debug_msg("clicked go to mark")
+    -- Handle the case when there are no bookmarks
+    if table_is_empty(bookmark_table) then
+        return
+    end
+    -- Ok, there are bookmarks, let's get the selected bookmark
+    local mark_entry = bmarks_widget:get_selection()
+    local index = get_first_index(mark_entry)
+    local cur_mark = bookmark_table[index]
+
+    -- Check if we are playing the right file and if not, switch to that file 
+    -- Either way, once the right file is playing, go to the correct time
+    if(get_uri() ~= cur_mark.uri) then
+        local new_playlist_item = {}
+        new_playlist_item.path = cur_mark.uri
+        new_playlist_item.name = cur_mark.name
+        new_playlist_item.options = {}
+        table.insert(new_playlist_item.options, "start-time="..cur_mark.time)
+        vlc.playlist.add({new_playlist_item})
+    else
+        go_to_time(cur_mark.time)
+    end
+end
+
+function input_changed()
+    -- check if going to a bookmark has been deferred.
 end
 
 function get_uri()
@@ -88,26 +135,3 @@ function get_position()
     local curtime = vlc.var.get(input, "time")
     return curtime
 end
-
--- Get clean title from filename
-function get_title()
-    local item = vlc.item or vlc.input.item()
-    if not item then
-        return ""
-    end
-    local metas = item:metas()
-    if metas["title"] then
-        return metas["title"]
-    else
-        local filename = string.gsub(item:name(), "^(.+)%.%w+$", "%1")
-        return filename
-        --return trim(filename or item:name())
-    end
-end
-
--- Remove leading and trailing spaces
-function trim(str)
-    if not str then return "" end
-    return string.gsub(str, "^%s*(.-)%s*$", "%1")
-end
-
