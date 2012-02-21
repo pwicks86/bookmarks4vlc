@@ -21,7 +21,7 @@ function descriptor()
              shortdesc = "Bookmarks!";
              description = "<center><b>Bookmarks for VLC</b></center><br />"
                         .. "Save your place in a movie!" ;
-             capabilities = { "input-listener" } }
+             capabilities = {} }
 end
 
 -- First function to be called when the extension is activated
@@ -29,6 +29,7 @@ function activate()
     create_dlg()
 end
 
+-- Called when the function is deactivated
 function deactivate()
     debug_msg("deactivated!")
 end
@@ -98,11 +99,11 @@ end
 function clear_bookmarks()
 end
 
--- Update the mark list with the current marks
+-- Update the gui mark list to be in sync with the backing table
 function update_marks()
     bmarks_widget:clear()
     for i,v in pairs(bookmark_table) do
-        bmarks_widget:add_value(v.time .. " - " .. v.name, i)
+        bmarks_widget:add_value(get_time_str(v.time) .. " - " .. v.name, i)
     end
 end
 
@@ -130,11 +131,6 @@ function get_first_index(t)
     end
 end
 
-
---function input_changed()
-    -- check if going to a bookmark has been deferred.
---end
-
 -- Get the uri of the currently playing item
 function get_uri()
     local item = vlc.input.item()
@@ -154,3 +150,16 @@ function get_position()
     local curtime = vlc.var.get(input, "time")
     return curtime
 end
+
+-- Get s as a nicely formatted string
+function get_time_str(secs)
+    if secs == 0 then
+        return "00:00:00"
+    else
+        local h = string.format("%02.f", math.floor(secs/3600))
+        local m = string.format("%02.f", math.floor(secs/60 - (h*60)))
+        local s = string.format("%02.f", math.floor(secs - h*3600 - m *60))
+        return h..":"..m..":"..s
+    end
+end
+
