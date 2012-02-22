@@ -12,6 +12,7 @@ clear_button = nil --Clear Bookmarks button
 
 bookmark_table = {} --table to hold actual bookmarks
 
+-- VLC defined callback functions --------------------------------------
 
 -- Script descriptor, called when the extensions are scanned
 function descriptor()
@@ -36,6 +37,9 @@ end
 function deactivate()
 end
 
+-- End VLC defined callback functions ----------------------------------
+
+-- GUI Setup and main callbacks ----------------------------------------
 
 -- Create the main dialog
 function create_dlg()
@@ -55,8 +59,6 @@ function create_dlg()
 
     dialog:show()
 end
-
-
 
 -- Called when the Add Bookmark button is pressed
 function add_bookmark()
@@ -86,7 +88,7 @@ function go_to_mark()
 
     -- Check if we are playing the right file and if not, switch to that file 
     -- Either way, once the right file is playing, go to the correct time
-    vlc.msg.dbg("about to hit if")
+    vlc.msg.dbg("about to hit if in go_to_mark")
     if((not not_stopped()) or (get_uri() ~= cur_mark.uri)) then
         local new_playlist_item = {}
         vlc.msg.dbg("path of item to be played: " .. cur_mark.uri)
@@ -95,7 +97,6 @@ function go_to_mark()
         new_playlist_item.options = {}
         table.insert(new_playlist_item.options, "start-time="..cur_mark.time)
         vlc.playlist.add({new_playlist_item})
-        --vlc.playlist.enqueue({new_playlist_item})
     else
         go_to_time(cur_mark.time)
     end
@@ -118,13 +119,9 @@ function clear_bookmarks()
     write_marks()
 end
 
--- Update the gui mark list to be in sync with the backing table
-function update_gui_list()
-    bmarks_widget:clear()
-    for i,v in pairs(bookmark_table) do
-        bmarks_widget:add_value(get_time_str(v.time) .. " - " .. v.name, i)
-    end
-end
+-- End GUI Setup and main callbacks -------------------------------------
+
+-- VLC specific functions -----------------------------------------------
 
 -- Return true if the player is playing or paused
 function not_stopped()
@@ -135,18 +132,6 @@ end
 function go_to_time(seconds)
     local input = vlc.object.input()
     vlc.var.set(input, "time", seconds)
-end
-
--- Return true if t is empty
-function table_is_empty(t) 
-    return table.maxn(t) == 0
-end
-
--- Get the index of the first thing in a table (according to pairs)
-function get_first_index(t)
-    for i,v in pairs(t) do
-        return i
-    end
 end
 
 -- Get the uri of the currently playing item
@@ -169,6 +154,65 @@ function get_position()
     return curtime
 end
 
+-- End VLC specific functions -------------------------------------------
+
+-- Generic Lua utility functions ----------------------------------------
+
+-- Return true if t is empty
+function table_is_empty(t) 
+    return table.maxn(t) == 0
+end
+
+-- Get the index of the first thing in a table (according to pairs)
+function get_first_index(t)
+    for i,v in pairs(t) do
+        return i
+    end
+end
+
+-- Returns true if we are running on windows
+-- (Hacky)
+function is_windows()
+    local home_dir = vlc.misc.homedir()
+    local first_char = string.sub(home_dir,1,1)
+    return not(first_char == "/")
+end
+
+-- Returns the appropriate path seperators for the platform
+function get_path_seperator()
+    if (is_windows()) then
+        return "\\"
+    else
+        return "/"
+    end
+end
+ 
+-- From lua users wiki
+function Split(str, delim, maxNb)
+    -- Eliminate bad cases...
+    if string.find(str, delim) == nil then
+        return { str }
+    end
+    if maxNb == nil or maxNb < 1 then
+        maxNb = 0    -- No limit
+    end
+    local result = {}
+    local pat = "(.-)" .. delim .. "()"
+    local nb = 0
+    local lastPos
+    for part, pos in string.gfind(str, pat) do
+        nb = nb + 1
+        result[nb] = part
+        lastPos = pos
+        if nb == maxNb then break end
+    end
+    -- Handle the last field
+    if nb ~= maxNb then
+        result[nb + 1] = string.sub(str, lastPos)
+    end
+    return result
+end
+
 -- Get secs as a nicely formatted string
 function get_time_str(secs)
     if secs == 0 then
@@ -180,6 +224,10 @@ function get_time_str(secs)
         return h..":"..m..":"..s
     end
 end
+
+-- End Generic Lua utility functions ------------------------------------
+
+-- Bookmark related functions -----------------------------------------
 
 -- Load any available bookmarks
 function load_marks()
@@ -227,53 +275,20 @@ function get_num_marks()
 end
     
 function get_mark_path()
-
     local datadir = vlc.misc.userdatadir()
     local mpath = datadir .. get_path_seperator() .. "marks.txt"
     vlc.msg.dbg("Path to bookmarks file is: " .. mpath)
     return mpath
 end
 
--- Returns true if we are running on windows
--- (Hacky)
-function is_windows()
-    local home_dir = vlc.misc.homedir()
-    local first_char = string.sub(home_dir,1,1)
-    return not(first_char == "/")
+-- Update the gui mark list to be in sync with the backing table
+function update_gui_list()
+    bmarks_widget:clear()
+    for i,v in pairs(bookmark_table) do
+        bmarks_widget:add_value(get_time_str(v.time) .. " - " .. v.name, i)
+    end
 end
 
--- Returns the appropriate path seperators for the platform
-function get_path_seperator()
-    if (is_windows()) then
-        return "\\"
-    else
-        return "/"
-    end
-end
- 
--- From lua users wiki
-function Split(str, delim, maxNb)
-    -- Eliminate bad cases...
-    if string.find(str, delim) == nil then
-        return { str }
-    end
-    if maxNb == nil or maxNb < 1 then
-        maxNb = 0    -- No limit
-    end
-    local result = {}
-    local pat = "(.-)" .. delim .. "()"
-    local nb = 0
-    local lastPos
-    for part, pos in string.gfind(str, pat) do
-        nb = nb + 1
-        result[nb] = part
-        lastPos = pos
-        if nb == maxNb then break end
-    end
-    -- Handle the last field
-    if nb ~= maxNb then
-        result[nb + 1] = string.sub(str, lastPos)
-    end
-    return result
-end
+-- End Bookmark related functions -------------------------------------
+
 
