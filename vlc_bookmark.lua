@@ -156,77 +156,6 @@ end
 
 -- End VLC specific functions -------------------------------------------
 
--- Generic Lua utility functions ----------------------------------------
-
--- Return true if t is empty
-function table_is_empty(t) 
-    return table.maxn(t) == 0
-end
-
--- Get the index of the first thing in a table (according to pairs)
-function get_first_index(t)
-    for i,v in pairs(t) do
-        return i
-    end
-end
-
--- Returns true if we are running on windows
--- (Hacky)
-function is_windows()
-    local home_dir = vlc.misc.homedir()
-    local first_char = string.sub(home_dir,1,1)
-    return not(first_char == "/")
-end
-
--- Returns the appropriate path seperators for the platform
-function get_path_seperator()
-    if (is_windows()) then
-        return "\\"
-    else
-        return "/"
-    end
-end
- 
--- From lua users wiki
-function Split(str, delim, maxNb)
-    -- Eliminate bad cases...
-    if string.find(str, delim) == nil then
-        return { str }
-    end
-    if maxNb == nil or maxNb < 1 then
-        maxNb = 0    -- No limit
-    end
-    local result = {}
-    local pat = "(.-)" .. delim .. "()"
-    local nb = 0
-    local lastPos
-    for part, pos in string.gfind(str, pat) do
-        nb = nb + 1
-        result[nb] = part
-        lastPos = pos
-        if nb == maxNb then break end
-    end
-    -- Handle the last field
-    if nb ~= maxNb then
-        result[nb + 1] = string.sub(str, lastPos)
-    end
-    return result
-end
-
--- Get secs as a nicely formatted string
-function get_time_str(secs)
-    if secs == 0 then
-        return "00:00:00"
-    else
-        local h = string.format("%02.f", math.floor(secs/3600))
-        local m = string.format("%02.f", math.floor(secs/60 - (h*60)))
-        local s = string.format("%02.f", math.floor(secs - h*3600 - m *60))
-        return h..":"..m..":"..s
-    end
-end
-
--- End Generic Lua utility functions ------------------------------------
-
 -- Bookmark related functions -----------------------------------------
 
 -- Load any available bookmarks
@@ -291,4 +220,48 @@ end
 
 -- End Bookmark related functions -------------------------------------
 
+-- Generic Lua utility functions ----------------------------------------
+
+-- Return true if t is empty
+function table_is_empty(t) 
+    return table.maxn(t) == 0
+end
+
+-- Get the index of the first thing in a table (according to pairs)
+function get_first_index(t)
+    for i,v in pairs(t) do
+        return i
+    end
+end
+
+-- Returns true if we are running on windows
+-- (Hacky)
+function is_windows()
+    local home_dir = vlc.misc.homedir()
+    local first_char = string.sub(home_dir,1,1)
+    return not(first_char == "/")
+end
+
+-- Returns the appropriate path seperators for the platform
+function get_path_seperator()
+    if (is_windows()) then
+        return "\\"
+    else
+        return "/"
+    end
+end
+ 
+-- Get secs as a nicely formatted string
+function get_time_str(secs)
+    if secs == 0 then
+        return "00:00:00"
+    else
+        local h = string.format("%02.f", math.floor(secs/3600))
+        local m = string.format("%02.f", math.floor(secs/60 - (h*60)))
+        local s = string.format("%02.f", math.floor(secs - h*3600 - m *60))
+        return h..":"..m..":"..s
+    end
+end
+
+-- End Generic Lua utility functions ------------------------------------
 
