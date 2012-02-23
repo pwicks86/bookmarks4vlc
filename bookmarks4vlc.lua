@@ -16,10 +16,10 @@ bookmark_table = {} --table to hold actual bookmarks
 
 -- Script descriptor, called when the extensions are scanned
 function descriptor()
-    return { title = "VLC Bookmarks" ;
+    return { title = "Bookmarks4vlc" ;
              version = "1.0" ;
              author = "Paul Wicks" ;
-             url = 'http://pwicks.com/code/bookmarks4vlc';
+             url = 'http://github.com/pwicks86/bookmarks4vlc';
              shortdesc = "Bookmarks!";
              description = "<center><b>Bookmarks for VLC</b></center><br />"
                         .. "Save your place in a movie!" ;
@@ -204,7 +204,10 @@ function get_num_marks()
 end
     
 function get_mark_path()
-    local datadir = vlc.misc.userdatadir()
+    -- vlc 2.0 currently doesn't allow access to misc from extensions
+    --local datadir = vlc.misc.userdatadir()
+    -- So, we'll use the main vlc directory instead
+    local datadir = "."
     local mpath = datadir .. get_path_seperator() .. "marks.txt"
     vlc.msg.dbg("Path to bookmarks file is: " .. mpath)
     return mpath
@@ -237,9 +240,12 @@ end
 -- Returns true if we are running on windows
 -- (Hacky)
 function is_windows()
-    local home_dir = vlc.misc.homedir()
-    local first_char = string.sub(home_dir,1,1)
-    return not(first_char == "/")
+    -- vlc 2.0 currently doesn't allow access to misc from extensions
+    --local home_dir = vlc.misc.homedir()
+    --local first_char = string.sub(home_dir,1,1)
+    --return not(first_char == "/")
+    local etc_issue = io.open("/etc/issue")
+    return etc_issue == nil
 end
 
 -- Returns the appropriate path seperators for the platform
