@@ -262,7 +262,12 @@ function is_windows()
     --local first_char = string.sub(home_dir,1,1)
     --return not(first_char == "/")
     local etc_issue = io.open("/etc/issue")
-    return etc_issue == nil
+    if(etc_issue == nil) then
+        return true
+    else
+        etc_issue:close()
+        return false
+    end
 end
 
 -- Returns the appropriate path seperators for the platform
