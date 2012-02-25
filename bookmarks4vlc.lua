@@ -223,9 +223,16 @@ end
 function get_mark_path()
     -- vlc 2.0 currently doesn't allow access to misc from extensions
     --local datadir = vlc.misc.userdatadir()
-    -- So, we'll use the main vlc directory instead
-    local datadir = "."
-    local mpath = datadir .. get_path_seperator() .. "marks.txt"
+    --So this becomes more complicated
+    local datadir = ""
+    if (is_windows()) then
+	-- On windows, read the value of the %HOMEPATH% environment variable
+    	datadir = os.getenv("HOMEPATH")
+    else
+	-- On unixy systems, just use ~
+        datadir = "~"
+    end
+    local mpath = datadir .. get_path_seperator() .. ".bookmarks4vlc"
     vlc.msg.dbg("Path to bookmarks file is: " .. mpath)
     return mpath
 end
