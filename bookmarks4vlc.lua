@@ -142,7 +142,8 @@ end
 
 -- Return true if the player is playing or paused
 function not_stopped()
-    return vlc.playlist.status() == ("playing" or "paused")
+    local cur_status = vlc.playlist.status() 
+    return (cur_status == "playing") or (cur_status == "paused")
 end
 
 -- Given a time in seconds, go to that time in the currently playing file
