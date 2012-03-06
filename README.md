@@ -9,3 +9,5 @@ Put bookmarks4vlc.lua in your VLC extension folder. Generally, this is _VLC Dire
 
 ## Known bugs/issues ##
 * bookmarks4vlc currently tracks items by absolute path, so if a file is moved then the associated bookmark won't work
+* bookmarks4vlc has limited capability for saving bookmarks in DVDs. Bookmarks will work within a title, but only while that title is playing.
+* Currently broken on OS X
