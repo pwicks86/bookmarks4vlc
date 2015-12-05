@@ -1,6 +1,8 @@
 # bookmarks4vlc #
 A simple bookmarks extension for VLC.
 
+## NO IDEA IF THIS WORKS ANYMORE, HAS NOT BEEN TESTED IN ANY RECENT (v2+) VERSIONS OF VLC
+
 ## Why? ##
 VLC claims to have a bookmark system, but it doesn't work (see [here][http://wiki.videolan.org/How_to_save_bookmarks]. This is a lua extension for VLC that implements a simple bookmarking system that actually works (at least for the simple use cases that I use it for)
 
